@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "lambda-multipart-parser": "^1.0.1",
     "react-dom": "^19.2.0",
     "react": "^19.2.0"
   },
