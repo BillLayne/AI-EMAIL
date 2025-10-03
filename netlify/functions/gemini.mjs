@@ -172,6 +172,10 @@ function extractHtmlFromResponse(text) {
            !trimmed.toLowerCase().includes('remember to set');
   }).join('\n');
 
+  // Remove duplicate title headings at the start (e.g., <h1>Auto Insurance Verification</h1>)
+  // This prevents Gmail from showing the title twice
+  cleaned = cleaned.replace(/^\s*<h[1-3][^>]*>[^<]*(?:verification|documentation|quote|notice|receipt|welcome|renewal)[^<]*<\/h[1-3]>\s*/i, '');
+
   return cleaned.trim();
 }
 
@@ -206,9 +210,14 @@ Recipient: ${formData.recipientName}
 Agent: ${agent.name} (${agent.email}, ${agent.phone})
 ${formData.customPrompt ? `Custom instructions: ${formData.customPrompt}` : ''}
 
-IMPORTANT: Return ONLY the HTML code without any explanations, comments, or instructions. Do not include phrases like "Key improvements" or "Before sending". Just pure HTML.`;
+IMPORTANT FORMATTING RULES:
+1. Return ONLY the HTML code without any explanations, comments, or instructions
+2. Do NOT include a subject line or title heading at the top (like <h1>Subject</h1>)
+3. Start directly with the greeting or first paragraph
+4. Do not include phrases like "Key improvements" or "Before sending"
+5. Just pure HTML email body content`;
 
-  const rawResponse = await generateText(prompt, 'You are an expert insurance email copywriter. Generate ONLY pure HTML code without any explanatory text or comments.');
+  const rawResponse = await generateText(prompt, 'You are an expert insurance email copywriter. Generate ONLY pure HTML code without any explanatory text or comments. Do not include a title/subject heading since that will be handled separately.');
   return extractHtmlFromResponse(rawResponse);
 }
 
