@@ -406,6 +406,25 @@ Return JSON array of opportunities: [{"title": "...", "description": "...", "pri
 }
 
 async function generateRateChangeExplanation(previousPremium, newPremium) {
-  const prompt = `Explain a premium change from $${previousPremium} to $${newPremium} in a friendly, understanding way.`;
-  return await generateText(prompt, 'You are a customer service specialist for an insurance company.');
+  const prompt = `Explain a premium change from $${previousPremium} to $${newPremium} in a friendly, understanding way.
+
+IMPORTANT: Return ONLY the explanation text that will be shown to the customer. Do not include any meta-commentary, suggestions, or notes to me. Just the customer-facing explanation.`;
+
+  const rawResponse = await generateText(prompt, 'You are a customer service specialist for an insurance company. Provide only the customer-facing text without any additional commentary.');
+
+  // Remove any explanatory notes that might start with phrases like "Here's", "Note:", etc.
+  let cleaned = rawResponse.trim();
+
+  // Remove common AI meta-commentary patterns
+  cleaned = cleaned.split('\n').filter(line => {
+    const lower = line.trim().toLowerCase();
+    return !lower.startsWith('here\'s') &&
+           !lower.startsWith('note:') &&
+           !lower.startsWith('tip:') &&
+           !lower.startsWith('suggestion:') &&
+           !lower.startsWith('you could also') &&
+           !lower.startsWith('alternatively');
+  }).join('\n').trim();
+
+  return cleaned;
 }
