@@ -40,17 +40,46 @@
   <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "react/": "https://aistudiocdn.com/react@^19.1.1/",
-    "react": "https://aistudiocdn.com/react@^19.1.1"
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0"
   }
 }
 </script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
   <body>
     <div id="root"></div>
-    <script type="text/babel" data-presets="env,react,typescript" data-type="module" src="/index.tsx"></script>
+
+    <!-- SystemJS and Babel for in-browser transpilation of all TSX/TS modules -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/systemjs/dist/s.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/systemjs/dist/extras/babel.min.js"></script>
+
+    <script type="systemjs-importmap">
+    {
+      "imports": {
+        "react": "https://aistudiocdn.com/react@^19.1.1",
+        "react-dom/client": "https://aistudiocdn.com/react-dom@^19.1.1/client",
+        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.21.0"
+      }
+    }
+    </script>
+    <script>
+      // Configure SystemJS to use Babel for transpiling TSX/TS files
+      System.config({
+        baseURL: '/',
+        transpiler: 'babel',
+        babelOptions: {
+            presets: ['react', 'typescript']
+        },
+        meta: {
+            '*.tsx': { loader: 'babel' },
+            '*.ts': { loader: 'babel' }
+        }
+      });
+
+      // Load the main application file
+      System.import('/index.tsx').catch(console.error);
+    </script>
   </body>
 </html>
