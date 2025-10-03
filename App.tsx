@@ -752,8 +752,16 @@ export default function App() {
     }
     setLoadingMessage("Copying to clipboard...");
     try {
+        // Extract content from body tag
         const bodyContentMatch = generatedHtml.match(/<body[^>]*>([\s\S]*)<\/body>/i);
-        const contentToCopy = bodyContentMatch ? bodyContentMatch[1].trim() : generatedHtml;
+        let contentToCopy = bodyContentMatch ? bodyContentMatch[1].trim() : generatedHtml;
+
+        // Remove any <!DOCTYPE>, <html>, <head>, and other non-body tags
+        contentToCopy = contentToCopy.replace(/<!DOCTYPE[^>]*>/gi, '');
+        contentToCopy = contentToCopy.replace(/<\/?html[^>]*>/gi, '');
+        contentToCopy = contentToCopy.replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '');
+        contentToCopy = contentToCopy.replace(/<\/?body[^>]*>/gi, '');
+        contentToCopy = contentToCopy.trim();
 
         const ok = await copyHtmlToClipboard(contentToCopy);
         if (ok) {
