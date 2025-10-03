@@ -27,29 +27,17 @@ export const handler = async (event) => {
 
     if (contentType.includes('multipart/form-data')) {
       const parsed = await multipart.parse(event);
-
-      // Debug logging
-      console.log('Parsed multipart data:', JSON.stringify(Object.keys(parsed)));
-      console.log('Parsed.file exists:', !!parsed.file);
-      if (parsed.file) {
-        console.log('File details:', {
-          hasContent: !!parsed.file.content,
-          hasFilename: !!parsed.file.filename,
-          hasName: !!parsed.file.name,
-          type: parsed.file.contentType || parsed.file.type
-        });
-      }
-
       action = parsed.action;
       payload = JSON.parse(parsed.payload || '{}');
 
-      // lambda-multipart-parser returns file data differently
-      // It provides: filename, contentType, content (Buffer), and encoding
-      if (parsed.file) {
+      // lambda-multipart-parser returns files in a 'files' array or 'file' property
+      const uploadedFile = parsed.file || (parsed.files && parsed.files[0]);
+
+      if (uploadedFile) {
         file = {
-          content: parsed.file.content || parsed.file,
-          contentType: parsed.file.contentType || parsed.file.type || 'application/pdf',
-          filename: parsed.file.filename || parsed.file.name || 'document.pdf'
+          content: uploadedFile.content || uploadedFile,
+          contentType: uploadedFile.contentType || uploadedFile.type || 'application/pdf',
+          filename: uploadedFile.filename || uploadedFile.name || 'document.pdf'
         };
       }
     } else {
