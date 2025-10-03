@@ -27,6 +27,19 @@ export const handler = async (event) => {
 
     if (contentType.includes('multipart/form-data')) {
       const parsed = await multipart.parse(event);
+
+      // Debug logging
+      console.log('Parsed multipart data:', JSON.stringify(Object.keys(parsed)));
+      console.log('Parsed.file exists:', !!parsed.file);
+      if (parsed.file) {
+        console.log('File details:', {
+          hasContent: !!parsed.file.content,
+          hasFilename: !!parsed.file.filename,
+          hasName: !!parsed.file.name,
+          type: parsed.file.contentType || parsed.file.type
+        });
+      }
+
       action = parsed.action;
       payload = JSON.parse(parsed.payload || '{}');
 
