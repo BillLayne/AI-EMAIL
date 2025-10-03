@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Player</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #111827; /* Dark background */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            color: #ffffff;
+        }
+        .header {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+            background-color: #1f2937;
+            border-bottom: 1px solid #374151;
+        }
+        .header img {
+            max-height: 50px;
+            width: auto;
+        }
+        .video-container {
+            width: 100%;
+            max-width: 960px; /* Max width for the video player */
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            background-color: #000;
+        }
+        .footer {
+            padding: 20px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        #errorMessage {
+            display: none;
+            padding: 20px;
+            background-color: #7f1d1d;
+            color: #fecaca;
+            border-radius: 8px;
+            max-width: 600px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="https://i.imgur.com/uVVShPM.png" alt="Bill Layne Insurance Agency Logo">
+    </div>
+
+    <div class="video-container">
+        <video id="videoPlayer" controls autoplay muted playsinline>
+            Your browser does not support the video tag.
+        </video>
+        <div id="errorMessage">
+            <p><strong>Error:</strong> Could not load video.</p>
+            <p>The provided video URL is either invalid or missing.</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>&copy; 2024 Bill Layne Insurance Agency. All rights reserved.</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoPlayer = document.getElementById('videoPlayer');
+            const errorMessage = document.getElementById('errorMessage');
+            const params = new URLSearchParams(window.location.search);
+            const videoUri = params.get('video');
+
+            if (videoUri) {
+                // Point the video src directly to our secure proxy endpoint.
+                // The browser will handle streaming the video.
+                const proxySrc = `/api/video-proxy?uri=${encodeURIComponent(videoUri)}`;
+                
+                videoPlayer.addEventListener('error', (e) => {
+                    videoPlayer.style.display = 'none';
+                    errorMessage.style.display = 'block';
+                    console.error('Error loading video source from proxy:', proxySrc, e);
+                });
+                
+                videoPlayer.src = proxySrc;
+
+            } else {
+                videoPlayer.style.display = 'none';
+                errorMessage.style.display = 'block';
+                console.error('Video URI parameter "video" is missing.');
+            }
+        });
+    </script>
+</body>
+</html>
