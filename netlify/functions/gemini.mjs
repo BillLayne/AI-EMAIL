@@ -29,7 +29,16 @@ export const handler = async (event) => {
       const parsed = await multipart.parse(event);
       action = parsed.action;
       payload = JSON.parse(parsed.payload || '{}');
-      file = parsed.file;
+
+      // lambda-multipart-parser returns file data differently
+      // It provides: filename, contentType, content (Buffer), and encoding
+      if (parsed.file) {
+        file = {
+          content: parsed.file.content || parsed.file,
+          contentType: parsed.file.contentType || parsed.file.type || 'application/pdf',
+          filename: parsed.file.filename || parsed.file.name || 'document.pdf'
+        };
+      }
     } else {
       const body = JSON.parse(event.body);
       action = body.action;
@@ -123,6 +132,23 @@ async function generateText(prompt, systemInstruction) {
   });
   const result = await model.generateContent(prompt);
   return result.response.text();
+}
+
+// Helper function to validate and prepare file for Gemini
+function prepareFileForGemini(file) {
+  if (!file) {
+    throw new Error('No file provided');
+  }
+  if (!file.content) {
+    throw new Error('File content is missing');
+  }
+
+  return {
+    inlineData: {
+      data: file.content.toString('base64'),
+      mimeType: file.contentType || 'application/pdf'
+    }
+  };
 }
 
 // Helper function to parse JSON from AI response
@@ -275,13 +301,7 @@ async function getVideosOperation(operation) {
 
 async function generatePromptFromPdf(file) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-  const filePart = {
-    inlineData: {
-      data: file.content.toString('base64'),
-      mimeType: file.contentType
-    }
-  };
+  const filePart = prepareFileForGemini(file);
 
   const prompt = 'Extract policy holder name, recipient name, and create a brief summary prompt from this PDF. Return JSON: {"policyHolder": "...", "recipientName": "...", "customPrompt": "..."}';
 
@@ -292,13 +312,7 @@ async function generatePromptFromPdf(file) {
 
 async function extractQuoteFromPdf(file) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-  const filePart = {
-    inlineData: {
-      data: file.content.toString('base64'),
-      mimeType: file.contentType
-    }
-  };
+  const filePart = prepareFileForGemini(file);
 
   const prompt = 'Extract home insurance quote information from this PDF. Return JSON with fields like: {"recipientName": "...", "policyNumber": "...", "premium": "...", etc}';
 
@@ -309,13 +323,7 @@ async function extractQuoteFromPdf(file) {
 
 async function extractAutoQuoteFromPdf(file) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-  const filePart = {
-    inlineData: {
-      data: file.content.toString('base64'),
-      mimeType: file.contentType
-    }
-  };
+  const filePart = prepareFileForGemini(file);
 
   const prompt = 'Extract auto insurance quote information from this PDF. Return JSON with relevant fields.';
 
@@ -326,13 +334,7 @@ async function extractAutoQuoteFromPdf(file) {
 
 async function extractRenewalInfoFromPdf(file) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-  const filePart = {
-    inlineData: {
-      data: file.content.toString('base64'),
-      mimeType: file.contentType
-    }
-  };
+  const filePart = prepareFileForGemini(file);
 
   const prompt = 'Extract renewal information from this insurance PDF. Return JSON with relevant fields.';
 
@@ -343,13 +345,7 @@ async function extractRenewalInfoFromPdf(file) {
 
 async function extractNewPolicyInfoFromPdf(file) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-  const filePart = {
-    inlineData: {
-      data: file.content.toString('base64'),
-      mimeType: file.contentType
-    }
-  };
+  const filePart = prepareFileForGemini(file);
 
   const prompt = 'Extract new policy information from this insurance PDF. Return JSON with relevant fields.';
 
@@ -360,13 +356,7 @@ async function extractNewPolicyInfoFromPdf(file) {
 
 async function extractCancellationsFromPdf(file) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-  const filePart = {
-    inlineData: {
-      data: file.content.toString('base64'),
-      mimeType: file.contentType
-    }
-  };
+  const filePart = prepareFileForGemini(file);
 
   const prompt = 'Extract cancellation data from this PDF. Return JSON array of cancellations.';
 
@@ -377,13 +367,7 @@ async function extractCancellationsFromPdf(file) {
 
 async function extractReceiptInfoFromPdf(file) {
   const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
-
-  const filePart = {
-    inlineData: {
-      data: file.content.toString('base64'),
-      mimeType: file.contentType
-    }
-  };
+  const filePart = prepareFileForGemini(file);
 
   const prompt = 'Extract receipt information from this PDF. Return JSON with relevant fields.';
 
