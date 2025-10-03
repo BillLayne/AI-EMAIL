@@ -134,6 +134,47 @@ function parseJsonFromText(text) {
   throw new Error('No valid JSON found in response');
 }
 
+// Helper function to extract HTML from AI response and remove explanatory text
+function extractHtmlFromResponse(text) {
+  // Try to find HTML in code blocks first
+  const htmlBlockMatch = text.match(/```html\s*([\s\S]*?)\s*```/);
+  if (htmlBlockMatch) {
+    return htmlBlockMatch[1].trim();
+  }
+
+  // Try to find complete HTML document (from <!DOCTYPE or <html> to </html>)
+  const htmlDocMatch = text.match(/(?:<!DOCTYPE[\s\S]*?)?<html[\s\S]*?<\/html>/i);
+  if (htmlDocMatch) {
+    return htmlDocMatch[0].trim();
+  }
+
+  // Try to find content starting with common HTML email patterns
+  const tableMatch = text.match(/(<table[\s\S]*?<\/table>)/i);
+  if (tableMatch) {
+    return tableMatch[1].trim();
+  }
+
+  // If no structured HTML found, remove common AI explanation patterns
+  let cleaned = text;
+
+  // Remove markdown code block markers
+  cleaned = cleaned.replace(/```html\s*/gi, '');
+  cleaned = cleaned.replace(/```\s*/g, '');
+
+  // Remove lines that start with * (bullet points - likely explanations)
+  cleaned = cleaned.split('\n').filter(line => {
+    const trimmed = line.trim();
+    return !trimmed.startsWith('*') &&
+           !trimmed.startsWith('#') &&
+           !trimmed.toLowerCase().startsWith('key improvements') &&
+           !trimmed.toLowerCase().startsWith('before sending') &&
+           !trimmed.toLowerCase().startsWith('important:') &&
+           !trimmed.toLowerCase().includes('remember to set');
+  }).join('\n');
+
+  return cleaned.trim();
+}
+
 async function generateSubjectLines(formData) {
   const prompt = `Generate 3 compelling email subject lines for an insurance email with these details:
 Campaign: ${formData.emailCampaign}
@@ -159,15 +200,16 @@ Return as JSON array: ["preheader1", "preheader2", "preheader3"]`;
 }
 
 async function generateEmailBody(formData, agent) {
-  const prompt = `Generate HTML email body for:
+  const prompt = `Generate ONLY the HTML email body content for:
 Campaign: ${formData.emailCampaign}
 Recipient: ${formData.recipientName}
 Agent: ${agent.name} (${agent.email}, ${agent.phone})
 ${formData.customPrompt ? `Custom instructions: ${formData.customPrompt}` : ''}
 
-Include personalized content and proper HTML formatting.`;
+IMPORTANT: Return ONLY the HTML code without any explanations, comments, or instructions. Do not include phrases like "Key improvements" or "Before sending". Just pure HTML.`;
 
-  return await generateText(prompt, 'You are an expert insurance email copywriter. Generate professional, personalized HTML email content.');
+  const rawResponse = await generateText(prompt, 'You are an expert insurance email copywriter. Generate ONLY pure HTML code without any explanatory text or comments.');
+  return extractHtmlFromResponse(rawResponse);
 }
 
 async function generateHomeQuoteProse(formData) {
